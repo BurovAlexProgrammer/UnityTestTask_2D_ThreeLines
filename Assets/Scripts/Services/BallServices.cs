@@ -14,20 +14,22 @@ namespace Services
         
         private List<BallView> _balls = new();
         private BallView _boundBall;
+        private int _ballIndex;
         
         private readonly Vector2 _ballPositionLeft = new(-1.88f, 3.52f);
         private readonly Vector2 _ballPositionRight = new(1.88f, 3.52f);
 
-        public event Action<BallView> BallCreated;
-        public event Action<BallView> Destroyed;
         public event Action<BallView, Collider2D> BallTriggerEntered;
         public event Action<BallView> BallStopped;
+        
+        private int BallIndex() => _ballIndex++; 
 
         public BallView CreateBall()
         {
             var newBall = _diContainer.InstantiatePrefabForComponent<BallView>(_appSettings.BallPrefab);
             var isLeft = Random.Range(0, 2) == 0;
             var ballPosition = isLeft ? _ballPositionLeft : _ballPositionRight;
+            newBall.gameObject.name = $"Ball{BallIndex()}";
             newBall.Init(ballPosition);
             newBall.TriggerEntered += OnBallTriggerEntered;
             newBall.Stopped += OnBallStopped;
@@ -36,21 +38,25 @@ namespace Services
             return newBall;
         }
 
+        public void RemoveBall(BallView ballView)
+        {
+            ballView.TriggerEntered -= OnBallTriggerEntered;
+            ballView.Stopped -= OnBallStopped;
+            ballView.Destroy();
+            _balls.Remove(ballView);
+        }
+
         private void OnBallStopped(BallView ball)
         {
+            if (ball.IsIntoColumn == false)
+                RemoveBall(ball);
+            
             BallStopped?.Invoke(ball);
         }
 
         private void OnBallTriggerEntered(BallView ballView, Collider2D columnTrigger)
         {
             BallTriggerEntered?.Invoke(ballView, columnTrigger);
-        }
-
-        public void RemoveBall(BallView ballView)
-        {
-            ballView.TriggerEntered -= OnBallTriggerEntered;
-            ballView.Stopped -= OnBallStopped;
-            _balls.Remove(ballView);
         }
     }
 }

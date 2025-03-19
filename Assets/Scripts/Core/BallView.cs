@@ -13,7 +13,9 @@ namespace Core
         
         private Rigidbody2D _rigidbody;
         private bool _isSleeping;
-        
+        private bool _isRealized;
+
+        public bool IsIntoColumn { get; private set; }
         public Color Color { get; private set; }
 
         public event Action<BallView, Collider2D> TriggerEntered; 
@@ -27,21 +29,31 @@ namespace Core
             _sprite.color = Color;
         }
 
+        public void Destroy()
+        {
+            Destroy(gameObject);
+        }
+
 
         private void OnTriggerEnter2D(Collider2D other)
         {
-            TriggerEntered?.Invoke(this, other);   
+            TriggerEntered?.Invoke(this, other);
+            IsIntoColumn = true;
         }
 
 
         private void Update()
         {
+            if (_isRealized) return;
+            
             if (_isSleeping != _rigidbody.IsSleeping())
             {
                 _isSleeping = _rigidbody.IsSleeping();
 
                 if (_isSleeping)
                 {
+                    _isRealized = true;
+                    _rigidbody.bodyType = RigidbodyType2D.Kinematic;
                     Stopped?.Invoke(this);
                     Debug.Log("Stopped: ", this);
                 }
