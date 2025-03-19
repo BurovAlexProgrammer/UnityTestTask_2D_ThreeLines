@@ -12,9 +12,9 @@ namespace Core
         [SerializeField] private SpriteRenderer _sprite;
         
         private Rigidbody2D _rigidbody;
-        private bool _isSleeping;
         private bool _isRealized;
 
+        public bool IsSleeping { get; private set; }
         public bool IsIntoColumn { get; private set; }
         public Color Color { get; private set; }
 
@@ -34,6 +34,17 @@ namespace Core
             Destroy(gameObject);
         }
 
+        public void Sleep()
+        {
+            _rigidbody.bodyType = RigidbodyType2D.Kinematic;
+        }
+        
+        public void Unsleep()
+        {
+            Debug.Log($"Unsleep ball [{gameObject.name}]");
+            _isRealized = false;
+            _rigidbody.bodyType = RigidbodyType2D.Dynamic;
+        }
 
         private void OnTriggerEnter2D(Collider2D other)
         {
@@ -46,11 +57,11 @@ namespace Core
         {
             if (_isRealized) return;
             
-            if (_isSleeping != _rigidbody.IsSleeping())
+            if (IsSleeping != _rigidbody.IsSleeping())
             {
-                _isSleeping = _rigidbody.IsSleeping();
+                IsSleeping = _rigidbody.IsSleeping();
 
-                if (_isSleeping)
+                if (IsSleeping)
                 {
                     _isRealized = true;
                     _rigidbody.bodyType = RigidbodyType2D.Kinematic;

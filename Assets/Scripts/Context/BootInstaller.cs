@@ -1,4 +1,5 @@
 ﻿using Core;
+using Services;
 using UnityEngine;
 using Zenject;
 
@@ -11,6 +12,7 @@ namespace Context
         public override void InstallBindings()
         {
             Container.Bind<AppSettings>().FromInstance(_appSettings).AsSingle();
+            Container.BindInterfacesAndSelfTo<InputService>().FromNew().AsSingle();
         }
     }
 }

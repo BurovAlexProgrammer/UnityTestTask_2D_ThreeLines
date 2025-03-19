@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Core;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
@@ -9,12 +10,17 @@ namespace Services
     public class GameCoreManager : MonoBehaviour
     {
         [Inject] private BallServices _ballServices;
+        [Inject] private ScoreService _scoreService;
+        [Inject] private InputService _inputService;
+        [Inject] private SoundService _soundService;
 
         [SerializeField] private SpringJoint2D _springJoint;
         [SerializeField] private List<Collider2D> _columnTriggers;
-
+        [SerializeField] private GameOverPopup _gameOverPopup;
+        
         private BallView[,] _pinnedBalls = new BallView[Dimension, Dimension];
         private BallView _currentBall;
+        private BallView _lastBall;
 
         private const int Dimension = 3;
 
@@ -22,19 +28,18 @@ namespace Services
         {
             Time.timeScale = 2f;
             CreateBall();
+            _inputService.Tap += CutRope;
         }
 
-        private void Update()
+        private void OnDestroy()
         {
-            if (Input.anyKeyDown)
-            {
-                CutRope();
-            }
+            _inputService.Tap -= CutRope;
         }
 
         private void CutRope()
         {
             _springJoint.connectedBody = null;
+            _soundService.PlayCutRope();
         }
 
         private void CreateBall()
@@ -43,6 +48,7 @@ namespace Services
             _ballServices.BallStopped += BallServices_OnBallStopped;
             
             _currentBall = _ballServices.CreateBall();
+            _lastBall = _currentBall;
             _springJoint.connectedBody = _currentBall.GetComponent<Rigidbody2D>();
         }
 
@@ -91,8 +97,7 @@ namespace Services
 
             Debug.LogError($"Column {columnIndex} is full! Ball cannot be placed.");
             RemoveBall(ballView);
-            
-            Refresh();
+            GameOver();
         }
 
         private void Refresh()
@@ -102,7 +107,33 @@ namespace Services
                 CreateBall();
             }
 
+            if (_lastBall != null && _lastBall.IsIntoColumn == false && _lastBall.IsSleeping)
+            {
+                GameOver();
+            }
+
             FindLines();
+            TryGameOver();
+        }
+
+        private void TryGameOver()
+        {
+            var isFull = IsFullGrid();
+            
+            Debug.Log($"Is full grid: {isFull}");
+            
+            if (isFull)
+            {
+                GameOver();
+            }
+        }
+
+        private void GameOver()
+        {
+            if (_currentBall != null) 
+                _currentBall.Sleep();
+            
+            _gameOverPopup.Show();
         }
 
         private void FindLines()
@@ -147,6 +178,10 @@ namespace Services
         private async UniTask ReleaseLine(List<Vector2Int> lineCoords)
         {
             Debug.Log($"ReleaseLine {lineCoords.ToString()}");
+
+            var firstBallCoords = lineCoords.First();
+            var color = _pinnedBalls[firstBallCoords.x, firstBallCoords.y].Color;
+            _scoreService.AddScoreByLine(color);
             
             foreach (var coord in lineCoords)
             {
@@ -159,6 +194,23 @@ namespace Services
                 }
                 
                 RemoveBall(ball);
+
+                await UniTask.WaitForSeconds(0.2f);
+            }
+
+            UnsleepBalls();
+        }
+
+        private void UnsleepBalls()
+        {
+            var ballsEnumerator = _pinnedBalls.GetEnumerator();
+            
+            while (ballsEnumerator.MoveNext())
+            {
+                if (ballsEnumerator.Current is BallView ballView)
+                {
+                    ballView.Unsleep();
+                }
             }
         }
         
@@ -176,6 +228,19 @@ namespace Services
             }
             
             return null;
+        }
+        
+        private bool IsFullGrid()
+        {
+            var enumerator = _pinnedBalls.GetEnumerator();
+
+            while (enumerator.MoveNext())
+            {
+                if (enumerator.Current == null)
+                    return false;
+            }
+            
+            return true;
         }
     }
 }
