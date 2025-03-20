@@ -10,6 +10,7 @@ namespace Core
         [Inject] private AppSettings _appSettings;
 
         [SerializeField] private SpriteRenderer _sprite;
+        [SerializeField] private BallPartsView _partsViewPrefab;
         
         private Rigidbody2D _rigidbody;
         private bool _isRealized;
@@ -31,6 +32,9 @@ namespace Core
 
         public void Destroy()
         {
+            var partsView = Instantiate(_partsViewPrefab);
+            partsView.Init(Color);
+            partsView.transform.position = transform.position;
             Destroy(gameObject);
         }
 

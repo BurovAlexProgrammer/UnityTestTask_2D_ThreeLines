@@ -15,6 +15,7 @@ namespace Services
         [Inject] private SoundService _soundService;
 
         [SerializeField] private SpringJoint2D _springJoint;
+        [SerializeField] private RopeRenderer _ropeRenderer;
         [SerializeField] private List<Collider2D> _columnTriggers;
         [SerializeField] private GameOverPopup _gameOverPopup;
         
@@ -40,6 +41,7 @@ namespace Services
         {
             _springJoint.connectedBody = null;
             _soundService.PlayCutRope();
+            _ropeRenderer.Hide();
         }
 
         private void CreateBall()
@@ -50,10 +52,12 @@ namespace Services
             _currentBall = _ballServices.CreateBall();
             _lastBall = _currentBall;
             _springJoint.connectedBody = _currentBall.GetComponent<Rigidbody2D>();
+            _ropeRenderer.SetBall(_currentBall.transform);
         }
 
         private void RemoveBall(BallView ball)
         {
+            _soundService.PlayRemove();
             var ballCoords = FindBallIndex(ball);
             
             _ballServices.RemoveBall(ball);

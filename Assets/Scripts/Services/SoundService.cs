@@ -1,5 +1,4 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Services
 {
@@ -9,6 +8,7 @@ namespace Services
         
         [SerializeField] private AudioClip _music;
         [SerializeField] private AudioClip _cutropeClip;
+        [SerializeField] private AudioClip _remove;
 
         private void Awake()
         {
@@ -19,13 +19,20 @@ namespace Services
         {
             PlaySound(_cutropeClip);
         }
+        
+        public void PlayRemove()
+        {
+            PlaySound(_remove);
+        }
 
         private void PlaySound(AudioClip audioClip)
         {
-            var newSound = new GameObject();
+            var newSound = new GameObject($"Sound_{audioClip.name}");
+            newSound.transform.SetParent(transform);
             var audioSource = newSound.AddComponent<AudioSource>();
             audioSource.clip = audioClip;
             audioSource.Play();
+            //better is use pool
         }
 
         private void PlayMusic()
