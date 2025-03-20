@@ -26,10 +26,12 @@ namespace Services
 
         public BallView CreateBall()
         {
+            // Debug.Log($"AppSetting: {JsonConvert.SerializeObject(_appSettings, new JsonSerializerSettings() {ReferenceLoopHandling = ReferenceLoopHandling.Ignore})}");
             var newBall = _diContainer.InstantiatePrefabForComponent<BallView>(_appSettings.BallPrefab);
             var isLeft = Random.Range(0, 2) == 0;
             var ballPosition = isLeft ? _ballPositionLeft : _ballPositionRight;
             newBall.gameObject.name = $"Ball{BallIndex()}";
+            Debug.Log($"ballPosition: {ballPosition}");
             newBall.Init(ballPosition);
             newBall.TriggerEntered += OnBallTriggerEntered;
             newBall.Stopped += OnBallStopped;

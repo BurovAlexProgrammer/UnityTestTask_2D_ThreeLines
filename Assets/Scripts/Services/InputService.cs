@@ -8,12 +8,20 @@ namespace Services
     {
         public event Action Tap;
         public event Action Escape;
+        private bool _touched;
         
         public void Tick()
         {
-            if (Input.GetMouseButtonDown(0) || (Input.touchCount > 0 && Input.GetTouch(0).tapCount == 1))
+            //NewInputSystem смотрелся бы лучше, но для однокнопочного приложения можно обойтись )
+            if (Input.GetMouseButtonDown(0) || (!_touched && Input.touchCount > 0 && Input.GetTouch(0).tapCount == 1))
             {
+                _touched = true;
                 Tap?.Invoke();
+            }
+
+            if (Input.touchCount == 0)
+            {
+                _touched = false;
             }
 
             if (Input.GetKey(KeyCode.Escape))

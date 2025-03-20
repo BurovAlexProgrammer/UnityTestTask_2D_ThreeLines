@@ -11,7 +11,14 @@ namespace Core
         [field: SerializeField] public List<GameColor> GameColors { get; private set; }
         [field: SerializeField] public BallView BallPrefab { get; private set; }
 
-        public Color[] Colors => _colors;
+        public Color[] Colors
+        {
+            get
+            {
+                _colors ??= GameColors.Select(x => x.Color).ToArray();
+                return _colors;
+            }
+        }
 
         private Color[] _colors;
 
